@@ -37,7 +37,7 @@ For comodità this IP was added to the file ```/etc/hosts``` on the Kali machine
 
 The result of ```nmap``` command is shown in the following screenshot
 
-[primo screenshot](nmap output.gpg)
+[primo screenshot](nmap.png)
 
 
 
@@ -47,4 +47,3 @@ Interesting things to notice:
 
 
 
-uefcj<hbc<hj,cf >>
