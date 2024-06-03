@@ -52,7 +52,7 @@ Command options:
 
 The result of `nmap` command is shown in the following screenshot.
 
-![1](nmap.png)
+![1](images/nmap.png)
 
 Notable things:
 - there is a web server is active on port 80 
@@ -62,7 +62,7 @@ For convenience, this IP address is added to the file `/etc/hosts` on the Kali m
 
 Upon initial inspection, navigating to `http://hackthebob/` reveals what appears to be a website under construction for an high school.
 
-![2](home_page.png)
+![2](images/home_page.png)
 
 Despite browsing through all the available pages, no significant information of interest is found.
 
@@ -80,12 +80,12 @@ By attempting the command `id | ls ` it became possible to list files. This stra
 
 By attempting the command `id | ls`, it becomes apparent that nesting commands can bypass the filter. This strategy exploits the fact that id accepts ls as input, enabling circumvention of the restriction.
 
-![secondo screen](dev.png)
+![secondo screen](images/dev.png)
 
 
 Now downloading with `curl` command `dev_shell.txt.bak` file, that is backup file of `de_shell.php`, it is possible to see the reason why the other commands disn't work
 
-![terzo](blocked.png)
+![terzo](images/blocked.png)
 
 It is time now to establish a netcat connection thorugh the web shell and the Kali machine. This is done using netcat 
 
@@ -123,7 +123,7 @@ Time to fix the server
 Everyone is annoying
 Sticky notes gotta buy em
 ```
-![quattro](harpo.png)
+![quattro](images/harpo.png)
 
 This output seams to have no meaning, but taking the first letter of each line the word HARPOCRATES is composed (this is the name of an egyptian divinity), maybe it is the passphrase for the gpg file.
 
@@ -142,13 +142,13 @@ gpg --batch –passphrase HARPOCRATES -d login.txt.gpg
 
 is the command for the decryption. Having the file in clear it is possible to read bob's password which is "b0bcat_"
 
-![5](elliot.png)
+![5](images/elliot.png)
 
 Now it is possible to change account again and impersonate bob. Salta fuori that Bob is a superuser with root privileges
 
 Important to notice that Bob is not the owner of the file flag.txt, so it is not possible yet to capture the flag, but since bob is a superuser, running just `sudo su` it is possible to became root account, caputure the flag and conclude the challenge.
 
-![6](root.png)
+![6](images/root.png)
 
 A large set of credentials assure persistence over this web server, but it is also notable, from the utput of nmap command, that there is another server running on the machine
 
@@ -157,4 +157,7 @@ I tryed to connect with hackthebob on bob account via SSH
 i didn't have to interrract via browser
 
 
-![6](ssh.pbg.png)
+![6](images/ssh.png)
+
+
+fine
