@@ -2,61 +2,83 @@
     body { 
         background-color: white; 
         color: black;
-        margin-top: 2.5cm;
+        margin-top: 2cm;
         margin-left: 1.5cm;
         margin-right: 1.5cm;
     }
 </style>
 
-# Hack The Bob: 1.0.1
+# Gain root privileges on Bob: 1.0.1 virtual machine
 
-- [**Discovery**](disco) &rightarrow; network scanning and services enumeration
-- [**Initial Access**](ini) &rightarrow; expoit RCE vulnerability on web application
-- [**Execution**](exe) &rightarrow; establish reverse shell with netcat
-- [**Credential Access**](cre) &rightarrow; use of unsecured credentials
-- [**Privilege Escalation**](pri) &rightarrow; abuse of valid accounts with root privileges
-- [**Persistence**](per)
+Gaining root privileges on a web server with the ultimate goal of capturing a flag is the aim of this demo. 
+The target is a vulnerable web server running within the [Bob: 1.0.1](https://www.vulnhub.com/entry/bob-101,226/) virtual machine, publicly available on [Vulnhub](www.vulnhub.com) platform. 
 
-The aim of this demo is to gain root priviledges on a web server in order to capture flag. The "[Hack The Bob: 1.0.1](https://www.hackingarticles.in/hack-the-bob-1-0-1-vm-ctf-challenge/)" walkthorugh is the baseline of this report.
+The walkthrough [Hack The Bob: 1.0.1](https://www.hackingarticles.in/hack-the-bob-1-0-1-vm-ctf-challenge/) is the baseline of the following report.
+
+## Content
+
+- [**Discovery**](#discovery) &rightarrow; network scanning and services enumeration
+- [**Initial Access**](#initial-access) &rightarrow; expoit RCE vulnerability on web application
+- [**Execution**](exe) &rightarrow; establish reverse shell using netcat
+- [**Credential Access**](cre) &rightarrow; abuse of legitimate credentials stored unsecurely in the machine
+- [**Privilege Escalation**](pri) &rightarrow; abuse of valid accounts with high privileges
+
+## Threat Model
+
+The threat model of the demo is that the attacker is physically present in the same local network of the target and has the ability to communicate with it opening a TCP connection.
+Initial access is obtained by Exploit Public-Facing Application technique
+The vulnerability will be exploited via browser and used to obtain initial access 
 
 
-The initial step is aimed to scan the local network in order to look for the IP address of the target machine. This step is taken running the following command 
+### Discovery
+The initial step involves scanning the local network to locate the IP address of the target machine.
+This step is taken executing the following command. 
 
 ```bash
 netdiscover -r 10.0.2.0/24
 ```
+It is determined that Bob: 1.0.1 has IP address 10.0.2.10, while the Kali machine has IP address 10.0.2.6
 
-Then the command
+Following this, the command
 
 ```bash
 nmap -p- -A 10.0.2.10 
 ```
-was performed in order to have a pretty accurate enumeration of the servers, on which port numbers and with which protocols were running on target 
+is employed. It takes as input the target IP along with specific parameters (outlined below) and provides in output an accurate enumeration of the servers running on target system. For each service it provides port numbers, protocols and other details corresponding to it. 
 
+Command options:
+- `-p-` scans all port range on target machine
+- `-A` it enables OS detection, version scanning of services, traceroute, and other advanced detection techniques. Essentially, it gets as much information as possible about the target machine.
 
+The result of `nmap` command is shown in the following screenshot.
 
-The result of ```nmap``` command is shown in the following screenshot
-
-![primo screenshot](nmap.png)
-
+![1](nmap.png)
 
 Notable things:
-- there is a web server reachable via HTTP on port 80 
+- there is a web server is active on port 80 
 - there is an SSH server listening on port 25468
 
-For comodità this IP was added to the file `/etc/hosts` on the Kali machine ad linked to the name "hackthebob"
+For convenience, this IP address is added to the file `/etc/hosts` on the Kali machine and linked to the name "hackthebob".
 
-From a first occhiata `http://hackthebob/` seams to be the web site of an high school in allestimento. Looking around in the site there weren't interesting pages. 
+Upon initial inspection, navigating to `http://hackthebob/` reveals what appears to be a website under construction for an high school.
 
-![8](home_page.png)
+![2](home_page.png)
 
-Analyzing better the nmap output it is possible to see that the web server has a textual file named `robot.txt` containging pages that are not showed by the browser.
+Despite browsing through all the available pages, no significant information of interest is found.
 
-Only the page `http://hackthebob/dev_shell.php` has interesting content: it seam to be a web shell, so the first thing done is to try some bash commands to see how the server reacts.
+However, upon closer analysis of `nmap` output detailing the web server, it becomes apparent that the web server hosts a file named `robots.txt`. Such a file typically contains directives for web crawlers regarding which pages to show or to ignore.
 
-It seams that the is some interal block or filer, in fact commands such as `ls` or `pwd` didn't work, the output tells to "go away", but then another strategy is used beacuse the command `id` seams not to be blocked and returns output.
+Examining its contents, four entries stand out as disallowed `/login.php`, `/passwords.html`, `/lat_memo.html` and `/dev_shell.php`. These names are interesting names, but further investigation reveals that only the page `http://hackthebob/dev_shell.php` is worthy: it appears to be a web shell, suggesting a potential entry point for a possible exploration.
 
-So runnging `id | ls ` it became possible to list files.
+### Initial Access
+
+The first action is to test some basic `bash` commands to examine how the server reacts.
+
+It appears that there's some internal block or filter in place, because commands such as `ls` or `pwd` display an error message, while the `id` command provides a coherent output.
+
+By attempting the command `id | ls ` it became possible to list files. This strategy of nested commands can bypass the filter exploiting the fact that `id` takes in input `ls` so that is possible to circumvent the filter.
+
+By attempting the command `id | ls`, it becomes apparent that nesting commands can bypass the filter. This strategy exploits the fact that id accepts ls as input, enabling circumvention of the restriction.
 
 ![secondo screen](dev.png)
 
