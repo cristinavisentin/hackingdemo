@@ -1,5 +1,4 @@
 <style> 
-    
     body { 
         background-color: white; 
         color: black;
@@ -34,7 +33,9 @@ The threat model of this demo is that the attacker (a Kali Linux virtual machine
 - [**Credential Access**](#credential-access) &rightarrow; use of legitimate credentials stored insecurely in the machine
 - [**Privilege Escalation**](#privilege-escalation) &rightarrow; abuse of high privileges valid accounts
 
+<br>
 <div class="horizontal-line"></div>
+<br>
 
 ### Discovery
 The initial step involves scanning the local network to find the IP address of the target machine, this is taken executing the following command
