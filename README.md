@@ -7,9 +7,12 @@
         margin-left: 1.5cm;
         margin-right: 1.5cm;
     }
+    .custom-bold {
+        font-weight: bold;
+    }
 </style>
 
-# **Gain root privileges on Bob: 1.0.1 virtual machine with unsecured store credentials**
+# <span class="custom-bold">Gain root privileges on Bob: 1.0.1 virtual machine with unsecured store credentials</span>
 
 Gaining root privileges on a web server with the ultimate goal of capturing a flag is the aim of this demo.
 The target is a vulnerable web server running within the [Bob: 1.0.1](https://www.vulnhub.com/entry/bob-101,226/) virtual machine, publicly available on [Vulnhub](www.vulnhub.com) platform. 
