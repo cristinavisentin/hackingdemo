@@ -22,7 +22,6 @@ The walkthrough [Hack The Bob: 1.0.1](https://www.hackingarticles.in/hack-the-bo
 ## Threat Model
 
 The threat model of this demo is that the attacker (a Kali Linux virtual machine) is physically present in the same local network of the target and has the ability to communicate with it through TCP connections.  
-Initial access is obtained by exploiting a web application vulnerability via browser.
 
 ## Content
 
@@ -42,7 +41,7 @@ netdiscover -r 10.0.2.0/24
 ```
 it invokes a tool based on ARP (Address Resolution Protocol) requests that determines online hosts on the network. Parameter `-r` indicates to the tool the range of IP addresses to scan.
 
-While the Kali machine has IP address `10.0.2.6`, it is determined that Bob: 1.0.1 is at `10.0.2.10`.
+While the Kali machine has IP address `10.0.2.6`, it is determined that _Bob: 1.0.1_ is at `10.0.2.10`.
 
 Following this, the command
 
@@ -62,7 +61,7 @@ Remarkable facts:
 - a web server is active on port 80,
 - there is an SSH server listening on port 25468 
 
-For convenience, Bob: 1.0.1 IP address is added to file `/etc/hosts` on the Kali machine and linked to the name _hackthebob_.
+For convenience, _Bob: 1.0.1_'s IP address is added to file `/etc/hosts` on the Kali machine and linked to the name _hackthebob_.
 
 Upon initial inspection, navigating to `http://hackthebob/` reveals what appears to be a website under construction for an high school.
 
@@ -82,7 +81,7 @@ The following picture shows the web interface of `dev_shell.php` file and the ou
 
 ![3](images/dev.png)
 
-The download of `dev_shell.txt.bak` file, which is likely a backup of `dev_shell.php`, using `curl` command reveals the reason why some commands didn't work. There is a filter consisting in the definition of an array of _bad words_, probably set for preventing mistaken usage. In other words there's a list of potentially dangerous or restricted commands not allowed to users.
+The download of `dev_shell.txt.bak` file with `curl` command, which is likely a backup of `dev_shell.php`, reveals the reason why some commands didn't work. There is a filter consisting in the definition of an array of _bad words_, probably set for preventing mistaken usage. In other words there's a list of potentially dangerous or restricted commands not allowed to users.
 
 
 ![4](images/blocked.png)
@@ -121,31 +120,36 @@ The attempt is to establish a remote Bash shell on Kali virtual machine, but the
 ```bash
 python -c 'import pty;pty.spawn("/bin/bash")'
 ```
-- `python -c` indicates the fact that the command following is executed by command line
+- `python -c` indicates the fact that the command following is executed by command line Python interpreter
 - `import pty;pty.spawn("/bin/bash")` imports a Python library and calls a function that spawns a Bash shell
 
-Now it is possible to look around and move in the file system of `Bob: 1.0.1` machine looking for some interesting things. The current account is `www-data`, but it is needed to gain higher privileges to complete the challenge, in fact moving to the root directory of the file system and listing files with `ls -l` command it is possible to see that the `flag.txt` file can be opened only by root account because it is the legitimate owner.
+Now it is possible to look around and move in the file system of _Bob: 1.0.1_ machine. The current account is `www-data`, but it is needed to gain higher privileges to complete the challenge, in fact moving to the root directory of the file system and listing files with `ls -l` command it is possible to see that the `flag.txt` file can be opened only by root account because it is the legitimate owner.
 
-In the `/home` directory there are four other directories with person names  (bob, elliot, jc, seb). In the first one, on path `/home/bob/Documents` there are an encrypted file with name `login.txt.gpg` and another directory named "Secret".
+In the `/home` directory there are four other directories with person names  (_bob_, _elliot_, _jc_, _seb_). In the first one, on path `/home/bob/Documents` there are an encrypted file with name `login.txt.gpg` and another directory named "Secret".
 
 On path `/home/bob/Documents/Secret/Keep_Out/No_Lookie_In_Here` there is a script `notes.sh`: executing it the output is a list of apparently no sense phrases.
-This output seams to have no meaning, but taking the first letter of each line the word HARPOCRATES is composed (this is the name of an Egyptian divinity), maybe it is the passphrase for the encrypted file.
+This output seams to have no meaning, but taking the first letter of each line the word 'HARPOCRATES' is composed (this is the name of an Egyptian divinity), maybe it is the passphrase for the encrypted file.
 
-All steps from the netcat connection establishment to this point are shown in the following screenshot.
+All steps from the Netcat connection establishment to this point are shown in the following screenshot.
 
 ![5](images/harpo.png) 
 
 Now it's needed to change account in order to decrypt `login.txt.gpg` bacause the current account `www-data` is not allowed.
 
 In `/home/elliot` there is a file, `theadminisdumb.txt`, that contains a long text with embedded two user's password. 
-According to this file Elliot's account has password 'theadminisdumb' while the Jc' one has password 'Qwerty'.
+According to this file Elliot's account has password 'theadminisdumb' while the Jc's one has password 'Qwerty'.
 
 ### Credential Access
-To test this information, command `su elliot` is ran and, after inserting his password, the current account changes to Elliot's one. Then it turns out that he has permission for decrypting the `.gpg` file, so the following command is ran for attempting decryption.
+To test this information, command `su elliot` is ran and, after inserting his password, the current account changes to Elliot's one.  
+It turns out that he has permission for decrypting the `.gpg` file, so the following command is ran for attempting decryption.
 
 ```bash
-gpg --batch –passphrase HARPOCRATES -d login.txt.gpg
+gpg --batch –-passphrase HARPOCRATES -d login.txt.gpg
 ```
+Command options:
+- `--batch` is for run in batch mode, meaning it won't require user input during execution;
+- `–-passphrase HARPOCRATE` specify the phrase used for decryption;
+- `-d login.txt.gpg` is to specify that decryption is requested on that file.
 
 Decryption succeeded thanks to the right passphrase.
 Having the file in clear it is possible to read Bob's password which is 'b0bcat_'.
@@ -155,20 +159,26 @@ All the steps mentioned are shown in the following screenshot.
 ![6](images/elliot.png)
 
 ### Privilege Escalation
-So now it is possible to change account again and impersonate Bob. Salta fuori that Bob is a user with root privileges (while Elliot did not)
+Change account again and impersonate Bob is now possible. It turns out that Bob is a user with root privileges (while Elliot did not).
 
-It is important to notice that Bob is not the owner of the file flag.txt, so it is not possible yet to capture the flag, but since Bob is a superuser, running just `sudo su` it is possible to became root account, this allow to capture the flag and conclude the challenge.
+It is important to notice that Bob is not the owner of the file `flag.txt`, so it is not possible yet to capture the flag.  
+However since Bob is a superuser, executing just `sudo su` it is possible to became root account: this allow to capture the flag and conclude the challenge.  
+Steps shown below.
 
 ![7](images/root.png)
 
-A large set of credentials assure persistence over this web server, but it is also notable, from the output of `nmap` command, that there is another server running on the machine
+## 
+A large set of credentials assure a sort of persistence over this web server and it is also notable, from the output of `nmap` command, that there is another server running on the machine.
 
-I tried to connect with hackthebob on bob account via SSH
-`ssh -p 25468 bob@hackthebob` and I realized that with just this command i was inside the web server 
+An attempt to connect with _Bob: 1.0.1_ on Bob account via SSH is made.
+```bash
+ssh -p 25468 bob@hackthebob
+``` 
+
+and I realized that with just this command i was inside the web server 
 i didn't have to interact via browser
 
 
 ![8](images/ssh.png)
 
 
-fine
