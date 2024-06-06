@@ -10,6 +10,9 @@
     .custom-bold {
         font-weight: bold;
     }
+    .horizontal-line {
+        border-top: 1px solid black;
+    }
 </style>
 
 # <span class="custom-bold">Gain root privileges on Bob: 1.0.1 virtual machine with unsecured store credentials</span>
@@ -31,7 +34,7 @@ The threat model of this demo is that the attacker (a Kali Linux virtual machine
 - [**Credential Access**](#credential-access) &rightarrow; use of legitimate credentials stored insecurely in the machine
 - [**Privilege Escalation**](#privilege-escalation) &rightarrow; abuse of high privileges valid accounts
 
----
+<div class="horizontal-line"></div>
 
 ### Discovery
 The initial step involves scanning the local network to find the IP address of the target machine, this is taken executing the following command
@@ -166,7 +169,7 @@ However since Bob is a superuser, executing just `sudo su` it is possible to bec
 
 ![7](images/root.png)
 
----
+<div class="horizontal-line"></div>
 
 From the output of `nmap` command, is remarkable that there is another server active on the machine: an SSH server not running as usual on port 22, but on port 25468.
 This custom port number could have be chosen for security reason, or to try to keep it hidden.
