@@ -1,8 +1,4 @@
 <style> 
-    h1 {
-        font-size: 36px;
-        font-weight: bold;
-    }
     body { 
         background-color: white; 
         color: black;
@@ -77,14 +73,18 @@ Examining its contents, four entries stand out as disallowed `/login.php`, `/pas
 ### Initial Access
 The first action taken is testing some basic bash commands to examine how the server reacts. It appears that there's some internal block or filter in place, because commands such as `ls` or `pwd` display an error message, while the `id` command provides a coherent output.
 
-By attempting the command `id | ls` it became possible to list files. This strategy of nested commands can bypass the filter exploiting the fact that `ls` takes in input `id`'s output so that is possible to circumvent the filter.  
-The following picture shows the web interface of `dev_shell-php` file and the output of the `ls` command.
+By attempting the command `id | ls` it became possible to list files. 
+The following picture shows the web interface of `dev_shell.php` file and the output of the `ls` command.
 
 ![3](images/dev.png)
 
-The download of `dev_shell.txt.bak` file, which is likely a backup of `dev_shell.php`, using `curl` command reveals why some commands didn't work. There is a filter probably set for mitigation. 
+The download of `dev_shell.txt.bak` file, which is likely a backup of `dev_shell.php`, using `curl` command reveals why some commands didn't work. There is a filter probably set for preventing mistaken usage which define an array of 'bad words'. 
 
 ![4](images/blocked.png)
+
+The specific filter circumvention is based on
+- the fact that in the HTLM file, the PHP code that executes "security control" is bad written. The code trim the command taken as input and push it in an array, then executes control check only on cell zero, aka the principal command;
+- operand `|`, called Pipe, simply takes as input of the second command the output of the first, but since `ls` doesn't do anything with its input the result of `id | ls` is just the output of `ls`.
 
 ### Execution
 Since the circumvention has been found is time now to expoit it for establishing a connection through the web shell and the Kali machine. This is done using Netcat which is a command line tool for remote communication over TCP connections
@@ -109,15 +109,15 @@ This output seams to have no meaning, but taking the first letter of each line t
 
 All steps from the netcat connection establishment to this point are shown in the following screenshot.
 
-![5](images/harpo.png)
+![5](images/harpo.png) 
 
 Now it's needed to change account in order to decrypt `login.txt.gpg` bacause the current account `www-data` is not allowed.
 
 In `/home/elliot` there is a file, `theadminisdumb.txt`, that contains a long text with embedded two user's password. 
-According to this file Elliot's account has password 'theadminisdumb' while the jc' one has password 'Qwerty'.
+According to this file Elliot's account has password 'theadminisdumb' while the Jc' one has password 'Qwerty'.
 
 ### Credential Access
-To test this information, command `su elliot` is ran and, after inserting his password, the current account changes to elliot's one. Then it turns out that he has permission for decrypting the `.gpg` file, so the following command is ran for attempting decryption.
+To test this information, command `su elliot` is ran and, after inserting his password, the current account changes to Elliot's one. Then it turns out that he has permission for decrypting the `.gpg` file, so the following command is ran for attempting decryption.
 
 ```bash
 gpg --batch –passphrase HARPOCRATES -d login.txt.gpg
@@ -126,7 +126,7 @@ gpg --batch –passphrase HARPOCRATES -d login.txt.gpg
 Decryption succeeded thanks to the right passphrase.
 Having the file in clear it is possible to read Bob's password which is 'b0bcat_'.
 
-All the steps mentioned are shown in the following screenshot.
+All the steps mentioned are shown in the following screenshot. 
 
 ![6](images/elliot.png)
 
