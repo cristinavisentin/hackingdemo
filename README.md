@@ -163,22 +163,22 @@ Change account again and impersonate Bob is now possible. It turns out that Bob 
 
 It is important to notice that Bob is not the owner of the file `flag.txt`, so it is not possible yet to capture the flag.  
 However since Bob is a superuser, executing just `sudo su` it is possible to became root account: this allow to capture the flag and conclude the challenge.  
-Steps shown below.
 
 ![7](images/root.png)
 
 ## 
-A large set of credentials assure a sort of persistence over this web server and it is also notable, from the output of `nmap` command, that there is another server running on the machine.
+From the output of `nmap` command, is remarkable that there is another server active on the machine: an SSH server not running as usual on port 22, but on port 25468.
+This custom port number could have be chosen for security reason, or to try to keep it hidden.
 
-An attempt to connect with _Bob: 1.0.1_ on Bob account via SSH is made.
+An attempt to connect with _Bob: 1.0.1_ on Bob account via SSH is made and succeeded with command 
+
 ```bash
 ssh -p 25468 bob@hackthebob
 ``` 
 
-and I realized that with just this command i was inside the web server 
-i didn't have to interact via browser
-
+So just with this one-line command it is possible to penetrate inside the web server, even without interacting with the web interface online.
 
 ![8](images/ssh.png)
 
-
+A large set of credentials assure a sort of persistence over this web server as long as users keep the same passwords and the TCP connection remains stable.  
+However with root privileges could be possible to change credentials, or add accounts and more. 
