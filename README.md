@@ -21,11 +21,11 @@ The target is a vulnerable web server running within the [Bob: 1.0.1](https://ww
 
 The walkthrough [Hack The Bob: 1.0.1](https://www.hackingarticles.in/hack-the-bob-1-0-1-vm-ctf-challenge/) is the baseline of the following report.
 
-## Threat Model
+# Threat Model
 
 The threat model of this demo is that the attacker (a Kali Linux virtual machine) is physically present in the same local network of the target and has the ability to communicate with it through TCP connections.  
 
-## Content
+# Content
 
 - [**Discovery**](#discovery) &rightarrow; network scanning and services enumeration
 - [**Initial Access**](#initial-access) &rightarrow; exploit RCE vulnerability on web application
@@ -33,9 +33,6 @@ The threat model of this demo is that the attacker (a Kali Linux virtual machine
 - [**Credential Access**](#credential-access) &rightarrow; use of legitimate credentials stored insecurely in the machine
 - [**Privilege Escalation**](#privilege-escalation) &rightarrow; abuse of high privileges valid accounts
 
-<br>
-<div class="horizontal-line"></div>
-<br>
 
 ### Discovery
 The initial step involves scanning the local network to find the IP address of the target machine, this is taken executing the following command
