@@ -188,3 +188,7 @@ So just with this one-line command it is possible to penetrate inside the web se
 
 A large set of credentials assure a sort of persistence over this web server as long as users keep the same passwords and the TCP connection remains stable.  
 However with root privileges could be possible to change credentials, or add accounts and more. 
+
+<div class="horizontal-line"></div>
+
+Cristina Visentin, 7/06/2024
