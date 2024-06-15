@@ -187,3 +187,11 @@ This single-line command provides direct access to the web server, bypassing the
 
 A large set of credentials assure a form of persistence over the web server as long as users keep the same passwords and the TCP connection remains stable.  
 However, with root privileges, it could be possible to change credentials, or add accounts and more to obtain real persistence. Yet, for the purpose of this demonstration, such actions are not within the scope of interest.
+<<<<<<< HEAD
+=======
+
+
+<div class="horizontal-line"></div>
+
+Cristina Visentin
+>>>>>>> refs/remotes/origin/main
