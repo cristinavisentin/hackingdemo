@@ -87,8 +87,8 @@ The download of `dev_shell.txt.bak` file, which is likely a backup of `dev_shell
 ![4](images/blocked.png)
 
 The filter is a very basic and limited security misure and, as a matter of fact, filter circumvention is possible as previously demonstrated with the `id | ls` command. It is based on two factors:
-1. In the HTLM file, the PHP code responsible for executing the "security control" is poorly written. The code trims the input command and places it into an array, then executes control check only on the first element of this array, which corresponds to the primary command. This is the vulnerability of the web server.
-2. The operund `|`, called _Pipe_, simply takes as input of the second command the output of the first one, but since `ls` doesn't do anything with its input the result of the concatenated command is just the output of `ls`.  
+1. In the HTML file, the PHP code responsible for executing the "security control" is poorly written. The code trims the input command and places it into an array, then executes control check only on the first element of this array, which corresponds to the primary command. This is the vulnerability of the web server.
+2. The operand `|`, called _Pipe_, simply takes as input of the second command the output of the first one, but since `ls` doesn't do anything with its input the result of the concatenated command is just the output of `ls`.  
 (Other concatenation operators, such as `&`, `&&` and `||` worked as well)
 
 This means that with a carefully constructed input it is possible to exploit the vulnerability of the web server.
@@ -118,15 +118,14 @@ Command options:
 - `-e /bin/bash` specifies the program to execute after connection, in this case, a Bash shell.
 - `10.0.2.6 6000` specifies the hostname and port number of the server side.
 
-Although the attempt aims to establish a remote Bash shell on the Kali virtual machine, the spawned process is only a basic Sh shell. To upgrade it to a more powerful and interactive shell,  on the server side of the connection the following text line is written:
+The established shell is a reverse shell since the server side is on the attacker's machine, and it is the target side that initiates the connection to the attacker.
 
+On the server side of the connection the following text line is written:
 
 ```bash
 python -c 'import pty;pty.spawn("/bin/bash")'
 ```
-This command invokes a Bash shell using the command line Python interpreter. 
-
-The established shell is a reverse shell since the server side is on the attacker's machine, and it is the target side that initiates the connection to the attacker.
+This Python script spawns a new Bash shell process solely to enhance visualization: this additional process offers a more interactive command-line interface (CLI) by providing a prompt, displaying the current directory, and presenting feedback during interactions with the shell.
 
 Now it is possible navigate the file system of _Bob: 1.0.1_ machine. The current account is `www-data`, but it is needed to gain higher privileges to complete the challenge, in fact moving to the root directory of the file system and listing files with `ls -l` command it's possible to see that the `flag.txt` file can be opened only by root account because it is the legitimate owner.
 
@@ -153,7 +152,7 @@ gpg --batch –-passphrase HARPOCRATES -d login.txt.gpg
 
 Command options:
 - `--batch` runs the command in batch mode, eliminating the need for user interaction during execution;
-- `–-passphrase HARPOCRATE` specifies the passphrase for decryption;
+- `–-passphrase HARPOCRATES` specifies the passphrase for decryption;
 - `-d login.txt.gpg` is to specify that decryption is requested on that file.
 
 The decryption succeeded, thanks to the correct passphrase.
@@ -188,8 +187,3 @@ This single-line command provides direct access to the web server, bypassing the
 
 A large set of credentials assure a form of persistence over the web server as long as users keep the same passwords and the TCP connection remains stable.  
 However, with root privileges, it could be possible to change credentials, or add accounts and more to obtain real persistence. Yet, for the purpose of this demonstration, such actions are not within the scope of interest.
-
-
-<div class="horizontal-line"></div>
-
-Cristina Visentin, 8/06/2024
