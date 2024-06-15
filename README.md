@@ -86,7 +86,7 @@ The download of `dev_shell.txt.bak` file, which is likely a backup of `dev_shell
 
 ![4](images/blocked.png)
 
-The filter is a very basic and limited security misure and, as a matter of fact, filter circumvention is possible as previously demonstrated with the `id | ls` command. It is based on two factors:
+The filter is a very basic and limited security measure and, as a matter of fact, filter circumvention is possible as previously demonstrated with the `id | ls` command. It is based on two factors:
 1. In the HTML file, the PHP code responsible for executing the "security control" is poorly written. The code trims the input command and places it into an array, then executes control check only on the first element of this array, which corresponds to the primary command. This is the vulnerability of the web server.
 2. The operand `|`, called _Pipe_, simply takes as input of the second command the output of the first one, but since `ls` doesn't do anything with its input the result of the concatenated command is just the output of `ls`.  
 (Other concatenation operators, such as `&`, `&&` and `||` worked as well)
