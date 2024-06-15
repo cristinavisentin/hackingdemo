@@ -127,7 +127,7 @@ python -c 'import pty;pty.spawn("/bin/bash")'
 ```
 This Python script spawns a new Bash shell process solely to enhance visualization: this additional process offers a more interactive command-line interface (CLI) by providing a prompt, displaying the current directory, and presenting feedback during interactions with the shell.
 
-Now it is possible navigate the file system of _Bob: 1.0.1_ machine. The current account is `www-data`, but it is needed to gain higher privileges to complete the challenge, in fact moving to the root directory of the file system and listing files with `ls -l` command it's possible to see that the `flag.txt` file can be opened only by root account because it is the legitimate owner.
+In this new shell, the exploration of the file system on _Bob: 1.0.1_ machine begins. The current account is `www-data`, but it is needed to gain higher privileges to complete the challenge, in fact moving to the root directory of the file system and listing files with `ls -l` command it's possible to see that the `flag.txt` file can be opened only by root account because it is the legitimate owner.
 
 Exploring the `/home` directory reveals additional user accounts: `bob`, `elliot`, `jc`, `seb`.  
 Inside Bob's directory (`/home/bob/Documents`), an encrypted file named `login.txt.gpg` and a directory named "Secret" are found. In this directory, on path `/home/bob/Documents/Secret/Keep_Out/No_Lookie_In_Here` there is a script called `notes.sh` that produces a list of apparently no sense phrases.
